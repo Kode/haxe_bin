@@ -178,6 +178,15 @@ class Context {
 	}
 
 	/**
+		Returns an `Array` of all imports in the context the macro was called.
+
+		Modifying the returned array has no effect on the compiler.
+	**/
+	public static function getLocalImports() :  Array<ImportExpr> {
+		return load("local_imports", 0)();
+	}
+
+	/**
 		Returns a map of local variables accessible in the context the macro was
 		called.
 
@@ -341,7 +350,7 @@ class Context {
 	/**
 		Types expression `e` and returns its type.
 
-		Typing the expression may result in an compiler error which can be
+		Typing the expression may result in a compiler error which can be
 		caught using `try ... catch`.
 	**/
 	public static function typeof( e : Expr ) : Type {
@@ -351,7 +360,7 @@ class Context {
 	/**
 		Types expression `e` and returns the corresponding `TypedExpr`.
 
-		Typing the expression may result in an compiler error which can be
+		Typing the expression may result in a compiler error which can be
 		caught using `try ... catch`.
 	**/
 	@:require(haxe_ver >= 3.1)
@@ -369,7 +378,7 @@ class Context {
 	}
 
 	/**
-		Returns true if `t1` and `t2` unify, false otherwise.
+		Tries to unify `t1` and `t2` and returns `true` if successful.
 	**/
 	public static function unify( t1 : Type, t2 : Type) : Bool {
 		return load("unify", 2)(t1, t2);
