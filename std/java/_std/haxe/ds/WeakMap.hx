@@ -536,7 +536,7 @@ private class Entry<K,V> extends WeakReference<K>
 	public var hash(default, null):Int;
 	public function new(key:K, value:V, hash:Int, queue:ReferenceQueue<K>)
 	{
-		super(key, queue);
+		super(key);
 		this.value = value;
 		this.hash = hash;
 	}
