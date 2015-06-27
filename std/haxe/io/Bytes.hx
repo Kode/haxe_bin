@@ -281,7 +281,7 @@ class Bytes {
 		b.position = pos;
 		b.writeFloat(v);
 		#elseif cpp
-		if( pos < 0 || pos + 4 > length ) throw Error.OutsideBounds;
+		//if( pos < 0 || pos + 4 > length ) throw Error.OutsideBounds;
 		untyped __global__.__hxcpp_memory_set_float(b,pos,v);
 		#else
 		setInt32(pos, FPHelper.floatToI32(v));

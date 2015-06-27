@@ -46,11 +46,11 @@ abstract Float32Array(Float32ArrayData) {
 	}
 
 	@:arrayAccess public inline function set( index : Int, value : Float ) : Float {
-		if( index >= 0 && index < length ) {
+		//if( index >= 0 && index < length ) {
 			this.bytes.setFloat((index<<2) + this.byteOffset, value);
 			return value;
-		}
-		return 0;
+		//}
+		//return 0;
 	}
 
 	public inline function sub( begin : Int, ?length : Int ) : Float32Array {
