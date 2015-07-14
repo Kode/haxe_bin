@@ -29,12 +29,18 @@ class Bytes {
 
 	public var length(default,null) : Int;
 	var b : BytesData;
+	#if java
+	var buffer: java.nio.ByteBuffer;
+	#end
 
 	function new(length,b) {
 		this.length = length;
 		this.b = b;
 		#if flash
 		b.endian = flash.utils.Endian.LITTLE_ENDIAN;
+		#end
+		#if java
+		buffer = java.nio.ByteBuffer.wrap(b).order(java.nio.ByteOrder.LITTLE_ENDIAN);
 		#end
 	}
 
@@ -238,6 +244,8 @@ class Bytes {
 		#elseif cpp
 		if( pos < 0 || pos + 4 > length ) throw Error.OutsideBounds;
 		return untyped __global__.__hxcpp_memory_get_float(b,pos);
+		#elseif java
+		return buffer.getFloat(pos);
 		#else
 		var b = new haxe.io.BytesInput(this,pos,4);
 		return b.readFloat();
