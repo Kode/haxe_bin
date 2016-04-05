@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2015 Haxe Foundation
+ * Copyright (C)2005-2016 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ extern class Promise<T>
 	/** @throws DOMError */
 	function new( init : (T -> Void) -> (Dynamic -> Void) -> Void ) : Void;
 
-	function then<TOut>( ?fulfillCallback : PromiseCallback<T, TOut>, ?rejectCallback : EitherType<Dynamic -> Void, PromiseCallback<Dynamic, TOut>> ) : Promise<TOut>;
+	function then<TOut>( fulfillCallback : Null<PromiseCallback<T, TOut>>, ?rejectCallback : EitherType<Dynamic -> Void, PromiseCallback<Dynamic, TOut>> ) : Promise<TOut>;
 
 	@:native("catch")
 	function catchError<TOut>( rejectCallback : EitherType<Dynamic -> Void, PromiseCallback<Dynamic, TOut>> ) : Promise<TOut>;

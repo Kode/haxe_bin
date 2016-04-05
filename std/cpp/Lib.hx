@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2012 Haxe Foundation
+ * Copyright (C)2005-2016 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -43,7 +43,6 @@ class Lib {
 		return untyped __global__.__hxcpp_unload_all_libraries();
 	}
 
-   @:analyzer(no_simplification)
 	public static function _loadPrime( lib : String, prim : String, signature : String, quietFail = false ) : Dynamic {
 		var factory:Callable< ConstCharStar -> Object > =
                untyped __global__.__hxcpp_cast_get_proc_address(lib, prim + "__prime", quietFail);

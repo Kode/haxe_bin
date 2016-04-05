@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2012 Haxe Foundation
+ * Copyright (C)2005-2016 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -130,16 +130,18 @@ enum ValueType {
 	}
 
 	public static function enumConstructor( e : EnumValue ) : String {
-			return untyped e.__Tag();
+			var value:cpp.EnumBase = cast e;
+			return value.getTag();
 	}
 
 	public static function enumParameters( e : EnumValue ) : Array<Dynamic> {
-			var result : Array<Dynamic> =  untyped e.__EnumParams();
-			return result==null ? [] : result;
+			var value:cpp.EnumBase = cast e;
+			return value.getParameters();
 	}
 
 	public inline static function enumIndex( e : EnumValue ) : Int {
-			return untyped e.__Index();
+			var value:cpp.EnumBase = cast e;
+			return value.getIndex();
 	}
 
 	public static function allEnums<T>( e : Enum<T> ) : Array<T> {

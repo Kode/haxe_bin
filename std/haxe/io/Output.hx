@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2014 Haxe Foundation
+ * Copyright (C)2005-2016 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -68,6 +68,8 @@ class Output {
 				writeByte(untyped __call__("ord", b[pos]));
 			#elseif cpp
 				writeByte(untyped b[pos]);
+			#elseif hl
+				writeByte(@:privateAccess b.b[pos]);
 			#else
 				writeByte(untyped b[pos]);
 			#end

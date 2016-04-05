@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2013 Haxe Foundation
+ * Copyright (C)2005-2016 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,7 +48,7 @@ class Timer {
 	/**
 		Creates a new timer that will run every `time_ms` milliseconds.
 
-		After creating the Timer instance, it calls `this].run` repeatedly,
+		After creating the Timer instance, it calls `this.run` repeatedly,
 		with delays of `time_ms` milliseconds, until `this.stop` is called.
 
 		The first invocation occurs after `time_ms` milliseconds, not
@@ -88,8 +88,10 @@ class Timer {
 			#end
 			id = null;
 		#elseif java
-			timer.cancel();
-			timer = null;
+			if(timer != null) {
+				timer.cancel();
+				timer = null;
+			}
 			task = null;
 		#end
 	}

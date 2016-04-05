@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2013 Haxe Foundation
+ * Copyright (C)2005-2016 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -65,6 +65,7 @@ class Http {
 	var file : { param : String, filename : String, io : haxe.io.Input, size : Int, mimeType : String };
 #elseif js
 	public var async : Bool;
+	public var withCredentials : Bool;
 #end
 	var postData : String;
 	var headers : List<{ header:String, value:String }>;
@@ -92,6 +93,7 @@ class Http {
 
 		#if js
 		async = true;
+		withCredentials = false;
 		#elseif sys
 		cnxTimeout = 10;
 		#end
@@ -201,7 +203,7 @@ class Http {
 			if( r.readyState != 4 )
 				return;
 			var s = try r.status catch( e : Dynamic ) null;
-			if ( s != null ) {
+			if ( s != null && untyped __js__('"undefined" !== typeof window') ) {
 				// If the request is local and we have data: assume a success (jQuery approach):
 				var protocol = js.Browser.location.protocol.toLowerCase();
 				var rlocalProtocol = ~/^(?:about|app|app-storage|.+-extension|file|res|widget):$/;
@@ -261,6 +263,7 @@ class Http {
 			onError(e.toString());
 			return;
 		}
+		r.withCredentials = withCredentials;
 		if( !Lambda.exists(headers, function(h) return h.header == "Content-Type") && post && postData == null )
 			r.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 
@@ -489,6 +492,7 @@ class Http {
 			else
 				b.add("Content-Length: "+uri.length+"\r\n");
 		}
+		b.add("Connection: close\r\n");
 		for( h in headers ) {
 			b.add(h.header);
 			b.add(": ");
@@ -634,17 +638,23 @@ class Http {
 
 		var bufsize = 1024;
 		var buf = haxe.io.Bytes.alloc(bufsize);
-		if( size == null ) {
+		if( chunked ) {
+			try {
+				while( true ) {
+					var len = sock.input.readBytes(buf,0,bufsize);
+					if( !readChunk(chunk_re,api,buf,len) )
+						break;
+				}
+			} catch ( e : haxe.io.Eof ) {
+				throw "Transfer aborted";
+			}
+		} else if( size == null ) {
 			if( !noShutdown )
 				sock.shutdown(false,true);
 			try {
 				while( true ) {
 					var len = sock.input.readBytes(buf,0,bufsize);
-					if( chunked ) {
-						if( !readChunk(chunk_re,api,buf,len) )
-							break;
-					} else
-						api.writeBytes(buf,0,len);
+					api.writeBytes(buf,0,len);
 				}
 			} catch( e : haxe.io.Eof ) {
 			}
@@ -653,11 +663,7 @@ class Http {
 			try {
 				while( size > 0 ) {
 					var len = sock.input.readBytes(buf,0,if( size > bufsize ) bufsize else size);
-					if( chunked ) {
-						if( !readChunk(chunk_re,api,buf,len) )
-							break;
-					} else
-						api.writeBytes(buf,0,len);
+					api.writeBytes(buf,0,len);
 					size -= len;
 				}
 			} catch( e : haxe.io.Eof ) {

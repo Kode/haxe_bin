@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2012 Haxe Foundation
+ * Copyright (C)2005-2016 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,6 @@ class Prime {
 
    #if (!macro && cpp)
 
-   @:analyzer(no_simplification)
 	public static function _loadPrime( lib : String, prim : String, signature : String, quietFail = false ) : Dynamic {
 		var factory:Callable< ConstCharStar -> Object > =
                untyped __global__.__hxcpp_cast_get_proc_address(lib, prim + "__prime", quietFail);
@@ -76,7 +75,7 @@ class Prime {
       #if neko
       var init = neko.Lib.load(inModuleName, "neko_init", 5);
 
-      if (init != null) 
+      if (init != null)
       {
          init( function(s) return new String(s),
                function(len:Int) { var r = []; if (len > 0) r[len - 1] = null; return r; },
@@ -99,7 +98,7 @@ class Prime {
 
       var cppMode = Context.defined("cpp");
 
-      var typeString = parts.length==1 ? codeToType("v",cppMode) : codeToType(parts.shift(),cppMode);
+      var typeString = parts.length==1 ? "Void" : codeToType(parts.shift(),cppMode);
       for(p in parts)
          typeString += "->" + codeToType(p,cppMode);
 

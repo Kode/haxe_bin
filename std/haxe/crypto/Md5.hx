@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2012 Haxe Foundation
+ * Copyright (C)2005-2016 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -151,12 +151,13 @@ class Md5 {
 		#end
 
 		var i = 0;
-		while( i < str.length ) {
-			blks[i >> 2] |= str.charCodeAt(i) << (((str.length * 8 + i) % 4) * 8);
+		var max = str.length;
+		var l = max * 8;
+		while( i < max ) {
+			blks[i >> 2] |= StringTools.fastCodeAt(str, i) << (((l + i) % 4) * 8);
 			i++;
 		}
-		blks[i >> 2] |= 0x80 << (((str.length * 8 + i) % 4) * 8);
-		var l = str.length * 8;
+		blks[i >> 2] |= 0x80 << (((l + i) % 4) * 8);
 		var k = nblk * 16 - 2;
 		blks[k] = (l & 0xFF);
 		blks[k] |= ((l >>> 8) & 0xFF) << 8;

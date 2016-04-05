@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2013 Haxe Foundation
+ * Copyright (C)2005-2016 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@ package haxe.ds;
 
 /**
 	ListSort provides a stable implementation of merge sort through its `sort`
-	method. It has a O(N.log(N)) complexity and does not require additional memory allocation
+	method. It has a O(N.log(N)) complexity and does not require additional memory allocation.
 **/
 class ListSort {
 

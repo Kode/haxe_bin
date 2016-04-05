@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2015 Haxe Foundation
+ * Copyright (C)2005-2016 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -19,9 +19,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
- 
+
 /**
 	Xml node types.
+
+	@see http://haxe.org/manual/std-Xml.html
 **/
 @:enum abstract XmlType(Int) {
 	/**
@@ -56,41 +58,41 @@
 
 /**
 	Crossplatform Xml API.
-	
+
 	@see http://haxe.org/manual/std-Xml.html
 **/
 class Xml {
 	/**
 		XML element type.
 	**/
-	static public var Element(default,null) = XmlType.Element;
+	static public var Element(default,never) = XmlType.Element;
 	/**
 		XML parsed character data type.
 	**/
-	static public var PCData(default,null) = XmlType.PCData;
+	static public var PCData(default,never) = XmlType.PCData;
 	/**
 		XML character data type.
 	**/
-	static public var CData(default,null) = XmlType.CData;
+	static public var CData(default,never) = XmlType.CData;
 	/**
 		XML comment type.
 	**/
-	static public var Comment(default,null) = XmlType.Comment;
+	static public var Comment(default,never) = XmlType.Comment;
 	/**
 		XML doctype element type.
 	**/
-	static public var DocType(default,null) = XmlType.DocType;
+	static public var DocType(default,never) = XmlType.DocType;
 	/**
 	 	XML processing instruction type.
 	**/
-	static public var ProcessingInstruction(default,null) = XmlType.ProcessingInstruction;
+	static public var ProcessingInstruction(default,never) = XmlType.ProcessingInstruction;
 	/**
 		XML document type.
 	**/
-	static public var Document(default,null) = XmlType.Document;
+	static public var Document(default,never) = XmlType.Document;
 
 	/**
-		Parses the String into an Xml document. 
+		Parses the String into an Xml document.
 	**/
 	static public function parse( str : String ) : Xml {
 		return haxe.xml.Parser.parse(str);
@@ -122,28 +124,28 @@ class Xml {
 	var children:Array<Xml>;
 	var attributeMap:Map<String, String>;
 
-	inline function get_nodeName() {
+	#if !cppia inline #end function get_nodeName() {
 		if (nodeType != Element) {
 			throw 'Bad node type, expected Element but found $nodeType';
 		}
 		return nodeName;
 	}
 
-	inline function set_nodeName(v) {
+	#if !cppia inline #end function set_nodeName(v) {
 		if (nodeType != Element) {
 			throw 'Bad node type, expected Element but found $nodeType';
 		}
 		return this.nodeName = v;
 	}
 
-	inline function get_nodeValue() {
+	#if !cppia inline #end function get_nodeValue() {
 		if (nodeType == Document || nodeType == Element) {
 			throw 'Bad node type, unexpected $nodeType';
 		}
 		return nodeValue;
 	}
 
-	inline function set_nodeValue(v) {
+	#if !cppia inline #end function set_nodeValue(v) {
 		if (nodeType == Document || nodeType == Element) {
 			throw 'Bad node type, unexpected $nodeType';
 		}
@@ -269,7 +271,7 @@ class Xml {
 		Returns an iterator of all child nodes.
 		Only works if the current node is an Element or a Document.
 	**/
-	public inline function iterator() : Iterator<Xml> {
+	public #if !cppia inline #end function iterator() : Iterator<Xml> {
 		ensureElementType();
 		return children.iterator();
 	}
@@ -297,7 +299,7 @@ class Xml {
 	/**
 		Returns the first child node.
 	**/
-	public inline function firstChild() : Xml {
+	public #if !cppia inline #end function firstChild() : Xml {
 		ensureElementType();
 		return children[0];
 	}
@@ -361,7 +363,7 @@ class Xml {
 	/**
 		Returns a String representation of the Xml node.
 	**/
-	public inline function toString() : String {
+	public #if !cppia inline #end function toString() : String {
 		return haxe.xml.Printer.print(this);
 	}
 
