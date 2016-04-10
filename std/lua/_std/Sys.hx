@@ -74,7 +74,7 @@ class Sys {
 				s = s.gsub('%s+$', '');
 				s = s.gsub('[\n\r]+', ' ');
 				if (s == "Darwin") return "Mac";
-				else if (s.lower().find("bsd") > 0) return "BSD";
+				else if (s.lower().find("bsd") != null) return "BSD";
 				else return "Linux";
 			}
 			case "\\" : return "Windows";
