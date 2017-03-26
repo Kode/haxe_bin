@@ -19,6 +19,22 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package cs.types;
+package php;
 
-typedef UInt16 = cs.StdTypes.UInt16;
+/**
+	This type can be used in places where externs use associative arrays as a list of configuration options.
+	This type is a special case for Haxe->Php generator: object declaration is generated as php array declaration whenever
+	that object declaration is passed directly to a variable or a function argument of this type.
+**/
+@:forward
+abstract NativeStructArray<T:{}>(NativeArray) to NativeArray {
+	@:from @:pure(false)
+	static function __fromObject<T:{}>(obj:T):NativeStructArray<T> {
+		return cast Syntax.array(obj);
+	}
+
+	@:to
+	inline function __toObject():T {
+		return Boot.createAnon(this);
+	}
+}

@@ -19,6 +19,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package cs.types;
+package cpp;
 
-typedef UInt16 = cs.StdTypes.UInt16;
+// Wrap external types with a class that integrates with Dynamic
+typedef Struct<T> = T;
+
+
+

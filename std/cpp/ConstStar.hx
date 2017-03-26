@@ -19,6 +19,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package cs.types;
+package cpp;
 
-typedef UInt16 = cs.StdTypes.UInt16;
+// Allows haxe to type result correctly, and hxcpp can recognise this use the correct type
+typedef ConstStar<T> = T;
+
+
