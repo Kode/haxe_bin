@@ -57,14 +57,14 @@ class Timer {
 	public function new( time_ms : Int ){
 		var me = this;
 		#if macro
-			id = kha.Scheduler.addTimeTask(function() me.run(), time_ms / 1000, time_ms / 1000);
-		#else
 			var dt = time_ms / 1000;
 			event = MainLoop.add(function() {
 				@:privateAccess event.nextRun += dt;
 				run();
 			});
 			event.delay(dt);
+		#else
+			id = kha.Scheduler.addTimeTask(function() me.run(), time_ms / 1000, time_ms / 1000);
 		#end
 	}
 
