@@ -37,7 +37,11 @@ package haxe;
 **/
 class Timer {
 
-	private var id : Null<Int>;
+	#if macro
+		private var event : MainLoop.MainEvent;
+	#else
+		private var id : Null<Int>;
+	#end
 
 	/**
 		Creates a new timer that will run every `time_ms` milliseconds.
@@ -52,7 +56,16 @@ class Timer {
 	**/
 	public function new( time_ms : Int ){
 		var me = this;
-		id = kha.Scheduler.addTimeTask(function() me.run(), time_ms / 1000, time_ms / 1000);
+		#if macro
+			id = kha.Scheduler.addTimeTask(function() me.run(), time_ms / 1000, time_ms / 1000);
+		#else
+			var dt = time_ms / 1000;
+			event = MainLoop.add(function() {
+				@:privateAccess event.nextRun += dt;
+				run();
+			});
+			event.delay(dt);
+		#end
 	}
 
 	/**
@@ -64,10 +77,17 @@ class Timer {
 		It is not possible to restart `this` Timer once stopped.
 	**/
 	public function stop() {
-		if( id == null )
-			return;
-		kha.Scheduler.removeTimeTask(id);
-		id = null;
+		#if macro
+			if( event != null ) {
+				event.stop();
+				event = null;
+			}
+		#else
+			if( id == null )
+				return;
+			kha.Scheduler.removeTimeTask(id);
+			id = null;
+		#end
 	}
 
 	/**
@@ -128,7 +148,11 @@ class Timer {
 		between two values make sense.
 	**/
 	public static inline function stamp() : Float {
-		return kha.Scheduler.realTime();
+		#if macro
+			return Sys.time();
+		#else
+			return kha.Scheduler.realTime();
+		#end
 	}
 
 }
