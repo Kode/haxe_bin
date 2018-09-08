@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,10 +35,9 @@ import haxe.macro.Type.TypedExpr;
 	- `haxe.macro.ExprTools`
 	- `haxe.macro.TypeTools`
 **/
-#if !neko @:noDoc #end
 class Context {
 
-#if neko
+#if (neko || eval || display)
 	/**
 		Displays a compilation error `msg` at the given `Position` `pos`
 		and aborts the current macro call.
@@ -466,9 +465,13 @@ class Context {
 
 	/**
 		Defines a new type from `TypeDefinition` `t`.
+
+		If `moduleDependency` is given and is not `null`, it should contain
+		a module path that will be used as a dependency for the newly defined module
+		instead of the current module.
 	**/
-	public static function defineType( t : TypeDefinition ) : Void {
-		load("define_type", 1)(t);
+	public static function defineType( t : TypeDefinition, ?moduleDependency : String ) : Void {
+		load("define_type", 2)(t, moduleDependency);
 	}
 
 	/**
@@ -510,6 +513,26 @@ class Context {
 	@:require(haxe_ver >= 3.2)
 	public static function storeTypedExpr( t : Type.TypedExpr ) : Expr {
 		return load("store_typed_expr",1)(t);
+	}
+
+	/**
+		Types expression `e`, stores the resulting typed expression internally and
+		returns a syntax-level expression that can be returned from a macro and
+		will be replaced by the stored typed expression.
+
+		If `e` is null or invalid, an exception is thrown.
+
+		A call to `storeExpr(e)` is equivalent to `storeTypedExpr(typeExpr(e))` without
+		the overhead of encoding and decoding between regular and macro runtime.
+
+		NOTE: the returned value references an internally stored typed expression
+		that is reset between compilations, so care should be taken when storing
+		the expression returned by this method in a static variable and using the
+		compilation server.
+	**/
+	@:require(haxe_ver >= 4.0)
+	public static function storeExpr( e : Expr ) : Expr {
+		return load("store_expr",1)(e);
 	}
 
 	/**
@@ -582,9 +605,12 @@ class Context {
 	@:allow(haxe.macro.TypeTools)
 	@:allow(haxe.macro.MacroStringTools)
 	@:allow(haxe.macro.TypedExprTools)
-	static function load( f, nargs ) : Dynamic {
-		#if macro
+	@:allow(haxe.macro.PositionTools)
+	static function load(f:String, nargs:Int) : Dynamic {
+		#if neko
 		return neko.Lib.load("macro", f, nargs);
+		#elseif eval
+		return eval.vm.Context.callMacroApi(f);
 		#else
 		return Reflect.makeVarArgs(function(_) return throw "Can't be called outside of macro");
 		#end

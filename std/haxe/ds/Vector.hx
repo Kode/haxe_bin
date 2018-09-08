@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,8 @@ private typedef VectorData<T> = #if flash10
 	java.NativeArray<T>
 #elseif lua
     lua.Table<Int,T>
+#elseif eval
+    eval.Vector<T>
 #else
 	Array<T>
 #end
@@ -63,7 +65,7 @@ abstract Vector<T>(VectorData<T>) {
 		#elseif neko
 			this = untyped __dollar__amake(length);
 		#elseif js
-			this = untyped __new__(Array, length);
+			this = js.Syntax.construct(Array, length);
 		#elseif cs
 			this = new cs.NativeArray(length);
 		#elseif java
@@ -71,9 +73,11 @@ abstract Vector<T>(VectorData<T>) {
 		#elseif cpp
 			this = NativeArray.create(length);
 		#elseif python
-			this = python.Syntax.pythonCode("[{0}]*{1}", null, length);
+			this = python.Syntax.code("[{0}]*{1}", null, length);
 		#elseif lua
 			this = untyped __lua_table__({length:length});
+		#elseif eval
+			this = new eval.Vector(length);
 		#else
 			this = [];
 			untyped this.length = length;
@@ -91,6 +95,8 @@ abstract Vector<T>(VectorData<T>) {
 		return this.unsafeGet(index);
 		#elseif python
 		return python.internal.ArrayImpl.unsafeGet(this, index);
+		#elseif eval
+		return this[index];
 		#else
 		return this[index];
 		#end
@@ -107,6 +113,8 @@ abstract Vector<T>(VectorData<T>) {
 		return this.unsafeSet(index,val);
 		#elseif python
 		return python.internal.ArrayImpl.unsafeSet(this, index, val);
+		#elseif eval
+		return this[index] = val;
 		#else
 		return this[index] = val;
 		#end
@@ -138,7 +146,7 @@ abstract Vector<T>(VectorData<T>) {
 		The results are unspecified if `length` results in out-of-bounds access,
 		or if `src` or `dest` are null
 	**/
-	public static #if (cs || java || neko || cpp) inline #end function blit<T>(src:Vector<T>, srcPos:Int, dest:Vector<T>, destPos:Int, len:Int):Void
+	public static #if (cs || java || neko || cpp || eval) inline #end function blit<T>(src:Vector<T>, srcPos:Int, dest:Vector<T>, destPos:Int, len:Int):Void
 	{
 		#if neko
 			untyped __dollar__ablit(dest,destPos,src,srcPos,len);
@@ -148,6 +156,8 @@ abstract Vector<T>(VectorData<T>) {
 			cs.system.Array.Copy(cast src, srcPos,cast dest, destPos, len);
 		#elseif cpp
 			dest.toData().blit(destPos,src.toData(), srcPos,len);
+		#elseif eval
+			src.toData().blit(srcPos, dest.toData(), destPos, len);
 		#else
 			if (src == dest) {
 				if (srcPos < destPos) {
@@ -178,13 +188,15 @@ abstract Vector<T>(VectorData<T>) {
 	/**
 		Creates a new Array, copy the content from the Vector to it, and returns it.
 	**/
-	public #if (flash || cpp || js || java) inline #end function toArray():Array<T> {
+	public #if (flash || cpp || js || java || eval) inline #end function toArray():Array<T> {
 		#if cpp
 			return this.copy();
 		#elseif python
 			return this.copy();
 		#elseif js
 			return this.slice(0);
+		#elseif eval
+			return this.toArray();
 		#else
 			var a = new Array();
 			var len = length;
@@ -227,7 +239,7 @@ abstract Vector<T>(VectorData<T>) {
 
 		If `array` is null, the result is unspecified.
 	**/
-	#if as3 @:extern #end
+	#if as3 extern #end
 	static public inline function fromArrayCopy<T>(array:Array<T>):Vector<T> {
 		#if python
 		return cast array.copy();
@@ -241,6 +253,8 @@ abstract Vector<T>(VectorData<T>) {
 		return cast array.copy();
 		#elseif js
 		return fromData(array.slice(0));
+		#elseif eval
+		return fromData(eval.Vector.fromArrayCopy(array));
 		#else
 		// TODO: Optimize this for others?
 		var vec = new Vector<T>(array.length);
@@ -257,10 +271,14 @@ abstract Vector<T>(VectorData<T>) {
 		`a[i] == a.copy()[i]` is true for any valid `i`. However,
 		`a == a.copy()` is always false.
 	**/
-	#if cs @:extern #end public inline function copy<T>():Vector<T> {
+	#if cs extern #end public inline function copy<T>():Vector<T> {
+		#if eval
+		return fromData(this.copy());
+		#else
 		var r = new Vector<T>(length);
 		Vector.blit(cast this, 0, r, 0, length);
 		return r;
+		#end
 	}
 
 	/**
@@ -276,12 +294,11 @@ abstract Vector<T>(VectorData<T>) {
 
 		If `sep` is null, the result is unspecified.
 	**/
-	#if cs @:extern #end public inline function join<T>(sep:String):String {
-		#if (flash10||cpp)
+	#if cs extern #end public inline function join<T>(sep:String):String {
+		#if (flash10 || cpp || eval)
 		return this.join(sep);
 		#else
 		var b = new StringBuf();
-		var i = 0;
 		var len = length;
 		for(i in 0...len) {
 			b.add( Std.string(get(i)) );
@@ -300,16 +317,19 @@ abstract Vector<T>(VectorData<T>) {
 
 		If `f` is null, the result is unspecified.
 	**/
-	#if cs @:extern #end public inline function map<S>(f:T->S):Vector<S> {
+	#if cs extern #end public inline function map<S>(f:T->S):Vector<S> {
+		#if eval
+			return fromData(this.map(f));
+		#else
 		var length = length;
 		var r = new Vector<S>(length);
-		var i = 0;
 		var len = length;
 		for(i in 0...len) {
 			var v = f(get(i));
 			r.set(i, v);
 		}
 		return r;
+		#end
 	}
 
 	/**
@@ -325,7 +345,7 @@ abstract Vector<T>(VectorData<T>) {
 		If `f` is null, the result is unspecified.
 	**/
 	public inline function sort<T>(f:T->T->Int):Void {
-		#if (neko || cs || java)
+		#if (neko || cs || java || eval)
 		throw "not yet supported";
 		#elseif lua
 		haxe.ds.ArraySort.sort(cast this, f);

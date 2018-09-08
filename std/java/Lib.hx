@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,20 @@ package java;
 //we cannot use the java package for custom classes, so we're redefining it as "haxe.java.Lib"
 @:native('haxe.java.Lib') class Lib
 {
+
+	/**
+		Print the specified value on the default output.
+	**/
+	inline public static function print( v : Dynamic ) : Void {
+		Sys.print(v);
+	}
+
+	/**
+		Print the specified value on the default output followed by a newline character.
+	**/
+	inline public static function println( v : Dynamic ) : Void {
+		Sys.println(v);
+	}
 
 	/**
 		Returns a native array from the supplied Array. This native array is unsafe to be written on,
@@ -97,7 +111,7 @@ package java;
 		return untyped Array.ofNative(native);
 	}
 
-	@:extern inline private static function doArray<T>(native:java.NativeArray<T>):Array<T>
+	extern inline private static function doArray<T>(native:java.NativeArray<T>):Array<T>
 	{
 		var ret:NativeArray<Dynamic> = new NativeArray(native.length);
 		for (i in 0...native.length)
@@ -163,7 +177,7 @@ package java;
 
 		This method only exists at compile-time, so it can't be called via reflection.
 	**/
-	@:extern public static inline function lock<T>(obj:Dynamic, block:T):Void
+	extern public static inline function lock<T>(obj:Dynamic, block:T):Void
 	{
 		untyped __lock__(obj, block);
 	}

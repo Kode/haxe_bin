@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -73,10 +73,6 @@ extern class Math
 		result is unspecified.
 
 		In order to test if a value is `NaN`, you should use `Math.isNaN()` function.
-
-		@php In PHP versions prior to 5.3.1 VC 9 there may be unexpected
-		results when performing arithmetic operations with `NaN` on Windows,
-		see <https://bugs.php.net/bug.php?id=42143>
 	**/
 	static var NaN(default, null) : Float;
 
@@ -235,7 +231,7 @@ extern class Math
 	**/
 	static function random() : Float;
 
-	#if ((flash && !as3) || cpp)
+	#if ((flash && !as3) || cpp || eval)
 	/**
 		Returns the largest integer value that is not greater than `v`, as a `Float`.
 
@@ -296,6 +292,7 @@ extern class Math
 	**/
 	static function isNaN( f : Float ) : Bool;
 
+	#if !eval
 	private static function __init__() : Void untyped {
 	#if flash
 		NaN = __global__["Number"].NaN;
@@ -324,5 +321,6 @@ extern class Math
 			#end
 		};
 	}
+	#end
 
 }

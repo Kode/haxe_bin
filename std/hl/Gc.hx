@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,13 +27,13 @@ enum GcFlag {
 	**/
 	Profile;
 	/**
-		Allows to dump a hlmemory.dump file when HL runs out of memory to be examined with hl memory inspector tool.
+		Allows one to dump a hlmemory.dump file when HL runs out of memory to be examined with hl memory inspector tool.
 	**/
 	DumpMem;
 	/**
-		Enable block tracking (see Gc.track API)
+		Disable GC locking for multithreads
 	**/
-	Track;
+	NoThreads;
 }
 
 class Gc {
@@ -44,31 +44,6 @@ class Gc {
 		var tot = 0., count = 0., mem = 0.;
 		_stats(tot, count, mem);
 		return { totalAllocated : tot, allocationCount : count, currentMemory : mem };
-	}
-
-	/**
-		Start tracking an object field change.
-		The check will be performed every allocation and the callback function triggered everytime
-		a change has been performed since last check. The callback parameter is true if the object was collected.
-		It is necessary to enable the Track flag in Gc.flags
-	**/
-	public static function track( obj : Dynamic, field : String, callb : Dynamic -> Bytes -> Void ) {
-		var oval = if( Reflect.isFunction(obj) ) Api.getClosureValue(obj) else obj;
-		var fid = if( ~/^[0-9]+$/.match(field) ) Std.parseInt(field) else @:privateAccess field.bytes.hash();
-		if( !_track(oval, fid, callb) )
-			throw "Could not track "+obj+"."+field;
-	}
-
-	public static function untrack( obj : Dynamic ) {
-		var oval = if( Reflect.isFunction(obj) ) Api.getClosureValue(obj) else obj;
-		return _untrack(oval);
-	}
-
-	@:hlNative("std", "gc_untrack_all") public static function untrackAll() : Void {
-	}
-
-	@:hlNative("std", "gc_track_count") public static function trackCount() : Int {
-		return 0;
 	}
 
 	/**
@@ -86,14 +61,20 @@ class Gc {
 		_set_flags(v.toInt());
 		return v;
 	}
+	
+	/**
+		Enter/leave a blocking section: when in a blocking section the thread cannot
+		allocate any memory but other threads will not wait for it for collecting memory.
+	**/
+	@:hlNative("std", "blocking")
+	public static function blocking( b : Bool ) {
+	}
 
 	@:hlNative("std", "gc_dump_memory") static function _dump( b : hl.Bytes ) : Void {}
 
 	@:hlNative("std", "gc_enable") public static function enable( b : Bool ) : Void {}
 	@:hlNative("std", "gc_major") public static function major() : Void {}
 	@:hlNative("std", "gc_stats") static function _stats( totalAllocated : hl.Ref<Float>, allocationCount : hl.Ref<Float>, currentMemory : hl.Ref<Float> ) : Void {}
-	@:hlNative("std", "gc_track") static function _track( obj : Dynamic, fid : Int, callb : Dynamic -> Bytes -> Void ) : Bool { return false; }
-	@:hlNative("std", "gc_untrack") static function _untrack( obj : Dynamic ) : Bool { return false; }
 
 	@:hlNative("std", "gc_get_flags") static function _get_flags() : Int { return 0; }
 	@:hlNative("std", "gc_set_flags") static function _set_flags( v : Int ) {}

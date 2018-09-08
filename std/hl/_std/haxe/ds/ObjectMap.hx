@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,6 +53,12 @@ class ObjectMap<K:{},T> implements haxe.Constraints.IMap<K,T> {
 
 	public function iterator() : Iterator<T> {
 		return h.iterator();
+	}
+	
+	public function copy() : ObjectMap<K,T> {
+		var copied = new ObjectMap();
+		for(key in keys()) copied.set(key, get(key));
+		return copied;
 	}
 
 	public function toString() : String {

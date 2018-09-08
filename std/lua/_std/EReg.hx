@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -153,6 +153,11 @@ class EReg {
 			buf.add(s.substr(offset));
 		return buf.toString();
 	}
+
+	public static function escape( s : String ) : String {
+		return escapeRegExpRe.map(s, function(r) return "\\" + r.matched(0));
+	}
+	static var escapeRegExpRe = ~/[\[\]{}()*+?.\\\^$|]/g;
 
 	static function __init__() : Void {
 		if (Rex == null){

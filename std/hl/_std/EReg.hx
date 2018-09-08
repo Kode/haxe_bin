@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -183,6 +183,10 @@ private typedef ERegValue = hl.Abstract<"ereg">;
 		return buf.toString();
 	}
 
+	public static function escape( s : String ) : String {
+		return escapeRegExpRe.map(s, function(r) return "\\" + r.matched(0));
+	}
+	static var escapeRegExpRe = ~/[\[\]{}()*+?.\\\^$|]/g;
 
 	@:hlNative("std", "regexp_new_options") static function regexp_new_options( bytes : hl.Bytes, options : hl.Bytes ) : ERegValue {
 		return null;

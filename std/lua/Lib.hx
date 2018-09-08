@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,8 +25,8 @@ import lua.Io;
 import lua.NativeStringTools;
 
 /**
-	Platform-specific Lua Library. Provides some platform-specific functions 
-	for the Lua target, such as conversion from Haxe types to native types 
+	Platform-specific Lua Library. Provides some platform-specific functions
+	for the Lua target, such as conversion from Haxe types to native types
 	and vice-versa.
 **/
 class Lib {

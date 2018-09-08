@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -104,12 +104,12 @@ extern class Date
 	static function now() : Date;
 
 	/**
-		Returns a Date from timestamp `t`.
+		Returns a Date from timestamp (in milliseconds) `t`.
 	**/
 	static function fromTime( t : Float ) : Date;
 
 	/**
-		Returns a Date from a formated string `s`, with the following accepted
+		Returns a Date from a formatted string `s`, with the following accepted
 		formats:
 
 		- `"YYYY-MM-DD hh:mm:ss"`

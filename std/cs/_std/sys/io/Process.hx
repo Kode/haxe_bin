@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,8 +35,9 @@ class Process {
 
 	private var native:NativeProcess;
 
-	public function new( cmd : String, ?args : Array<String> ) : Void
+	public function new( cmd : String, ?args : Array<String>, ?detached : Bool ) : Void
 	{
+		if( detached ) throw "Detached process is not supported on this platform";
 		this.native = createNativeProcess(cmd, args);
 		native.Start();
 
@@ -62,7 +63,7 @@ class Process {
 				case "Windows":
 					native.StartInfo.FileName = switch (Sys.getEnv("COMSPEC")) {
 						case null: "cmd.exe";
-						case comspec: comspec;
+						case var comspec: comspec;
 					}
 					native.StartInfo.Arguments = '/C "$cmd"';
 				case _:

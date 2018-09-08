@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,10 +37,13 @@ package haxe;
 **/
 class Timer {
 
-	#if macro
-		private var event : MainLoop.MainEvent;
-	#else
+	#if (flash || js)
 		private var id : Null<Int>;
+	#elseif java
+		private var timer : java.util.Timer;
+		private var task : java.util.TimerTask;
+	#else
+		private var event : MainLoop.MainEvent;
 	#end
 
 	/**
@@ -55,16 +58,22 @@ class Timer {
 		The accuracy of this may be platform-dependent.
 	**/
 	public function new( time_ms : Int ){
-		var me = this;
-		#if macro
+		#if flash
+			var me = this;
+			id = untyped __global__["flash.utils.setInterval"](function() { me.run(); },time_ms);
+		#elseif js
+			var me = this;
+			id = untyped setInterval(function() me.run(),time_ms);
+		#elseif java
+			timer = new java.util.Timer();
+			timer.scheduleAtFixedRate(task = new TimerTask(this), haxe.Int64.ofInt(time_ms), haxe.Int64.ofInt(time_ms));
+		#else
 			var dt = time_ms / 1000;
 			event = MainLoop.add(function() {
 				@:privateAccess event.nextRun += dt;
 				run();
 			});
 			event.delay(dt);
-		#else
-			id = kha.Scheduler.addTimeTask(function() me.run(), time_ms / 1000, time_ms / 1000);
 		#end
 	}
 
@@ -77,16 +86,26 @@ class Timer {
 		It is not possible to restart `this` Timer once stopped.
 	**/
 	public function stop() {
-		#if macro
+		#if (flash || js)
+			if( id == null )
+				return;
+			#if flash
+				untyped __global__["flash.utils.clearInterval"](id);
+			#elseif js
+				untyped clearInterval(id);
+			#end
+			id = null;
+		#elseif java
+			if(timer != null) {
+				timer.cancel();
+				timer = null;
+			}
+			task = null;
+		#else
 			if( event != null ) {
 				event.stop();
 				event = null;
 			}
-		#else
-			if( id == null )
-				return;
-			kha.Scheduler.removeTimeTask(id);
-			id = null;
 		#end
 	}
 
@@ -148,11 +167,37 @@ class Timer {
 		between two values make sense.
 	**/
 	public static inline function stamp() : Float {
-		#if macro
+		#if flash
+			return flash.Lib.getTimer() / 1000;
+		#elseif (neko || php)
 			return Sys.time();
+		#elseif js
+			return Date.now().getTime() / 1000;
+		#elseif cpp
+			return untyped __global__.__time_stamp();
+		#elseif python
+			return Sys.cpuTime();
+		#elseif sys
+			return Sys.time();
+
 		#else
-			return kha.Scheduler.realTime();
+			return 0;
 		#end
 	}
 
 }
+
+#if java
+@:nativeGen
+private class TimerTask extends java.util.TimerTask {
+	var timer:Timer;
+	public function new(timer:Timer):Void {
+		super();
+		this.timer = timer;
+	}
+
+	@:overload override public function run():Void {
+		timer.run();
+	}
+}
+#end

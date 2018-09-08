@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -223,8 +223,6 @@ class Path {
 		}
 
 		var tmp = target.join(slash);
-		var regex = ~/([^:])\/+/g;
-		var result = regex.replace(tmp, "$1" +slash);
 		var acc = new StringBuf();
 		var colon = false;
 		var slashes = false;
@@ -235,7 +233,7 @@ class Path {
 					colon = true;
 				case "/".code if (!colon):
 					slashes = true;
-				case i:
+				case var i:
 					colon = false;
 					if (slashes) {
 						acc.add("/");

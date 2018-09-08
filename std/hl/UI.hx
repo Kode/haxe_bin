@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,12 +25,19 @@ typedef SentinelHandle = hl.Abstract<"ui_sentinel">;
 
 abstract Sentinel(SentinelHandle) {
 
+	public var pause(get,set) : Bool;
+
 	public function new( timeout, callback ) {
 		this = create_sentinel(timeout,callback);
 	}
-	
-	public function setPause( p : Bool ) {
+
+	function get_pause() {
+		return is_paused(this);
+	}
+
+	function set_pause( p : Bool ) {
 		_pause(this, p);
+		return p;
 	}
 
 	public function tick() {
@@ -43,6 +50,7 @@ abstract Sentinel(SentinelHandle) {
 
 	@:hlNative("ui","ui_sentinel_tick") static function _tick( h : SentinelHandle ) : Void {}
 	@:hlNative("ui","ui_sentinel_pause") static function _pause( h : SentinelHandle, b : Bool ) : Void {}
+	@:hlNative("ui","ui_sentinel_is_paused") static function is_paused( h : SentinelHandle ) : Bool { return false; }
 
 }
 
@@ -123,10 +131,18 @@ enum DialogFlags {
 	IsError;
 }
 
-@:enum abstract LoopResult(Int) {
+enum abstract LoopResult(Int) {
 	var NoMessage = 0;
 	var HandledMessage = 1;
 	var Quit = 2;
+}
+
+typedef FileOptions = {
+	@:optional var window : Window;
+	@:optional var filters : Array<{ name : String, exts : Array<String> }>;
+	@:optional var filterIndex : Int;
+	@:optional var fileName : String;
+	@:optional var title : String;
 }
 
 /**
@@ -161,5 +177,57 @@ class UI {
 	@:hlNative("ui","ui_close_console")
 	public static function closeConsole() : Void {
 	}
-	
+
+	public static function loadFile( opts : FileOptions ) {
+		return chooseFile(false, opts);
+	}
+
+	public static function saveFile( opts : FileOptions ) {
+		return chooseFile(true, opts);
+	}
+
+	static function chooseFile( save : Bool, opts : FileOptions ) @:privateAccess {
+		var out : Dynamic = {
+		};
+		if( opts.fileName != null ) {
+			var file = sys.FileSystem.absolutePath(opts.fileName);
+			if( Sys.systemName() == "Windows" )
+				file = file.split("/").join("\\");
+			var dir = null;
+			if( sys.FileSystem.isDirectory(file) ) {
+				dir = file;
+				file = null;
+			} else {
+				var path = new haxe.io.Path(file);
+				dir = path.dir;
+				file = path.file + (path.ext == null ? "" : "." + path.ext);
+			}
+			if( file != null )
+				out.fileName = file.bytes;
+			if( dir != null )
+				out.directory = dir.bytes;
+		}
+		if( opts.title != null )
+			out.title = opts.title.bytes;
+		if( opts.filters != null ) {
+			var filters = new hl.NativeArray<hl.Bytes>(opts.filters.length * 2);
+			var i = 0;
+			for( f in opts.filters ) {
+				filters[i++] = f.name.bytes;
+				filters[i++] = [for( e in f.exts ) "*."+e].join(";").bytes;
+			}
+			out.filters = filters;
+			out.filterIndex = opts.filterIndex;
+		}
+		if( opts.window != null )
+			out.window = opts.window.h;
+		var str = _chooseFile(save, out);
+		return str == null ? null : String.fromUCS2(str);
+	}
+
+	@:hlNative("ui","ui_choose_file")
+	static function _chooseFile( forSave : Bool, obj : Dynamic ) : hl.Bytes {
+		return null;
+	}
+
 }

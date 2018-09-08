@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,34 +21,35 @@
  */
 package hl;
 
-@:enum
+enum
 abstract TypeKind(Int) {
 	public var HVoid = 0;
 	public var HUI8 = 1;
 	public var HUI16 = 2;
 	public var HI32 = 3;
-	public var HF32 = 4;
-	public var HF64 = 5;
-	public var HBool = 6;
-	public var HBytes = 7;
-	public var HDyn = 8;
-	public var HFun = 9;
-	public var HObj = 10;
-	public var HArray = 11;
-	public var HType = 12;
-	public var HRef = 13;
-	public var HVirtual = 14;
-	public var HDynObj = 15;
-	public var HAbstract = 16;
-	public var HEnum = 17;
-	public var HNull = 18;
+	public var HI64 = 4;
+	public var HF32 = 5;
+	public var HF64 = 6;
+	public var HBool = 7;
+	public var HBytes = 8;
+	public var HDyn = 9;
+	public var HFun = 10;
+	public var HObj = 11;
+	public var HArray = 12;
+	public var HType = 13;
+	public var HRef = 14;
+	public var HVirtual = 15;
+	public var HDynObj = 16;
+	public var HAbstract = 17;
+	public var HEnum = 18;
+	public var HNull = 19;
 }
 
 @:coreType abstract Type {
 
 	public var kind(get,never) : TypeKind;
 
-	@:extern inline function get_kind() : TypeKind {
+	extern inline function get_kind() : TypeKind {
 		return untyped $tkind(this);
 	}
 
@@ -56,16 +57,17 @@ abstract TypeKind(Int) {
 		return null;
 	}
 
-	@:extern public static inline function getDynamic( v : Dynamic ) : Type {
+	extern public static inline function getDynamic( v : Dynamic ) : Type {
 		return untyped $tdyntype(v);
 	}
 
-	@:extern public static inline function get<T>( v : T ) : Type {
+	extern public static inline function get<T>( v : T ) : Type {
 		return untyped $ttype(v);
 	}
 
-	@:extern public inline function getName() : String {
+	extern public inline function getTypeName() : String {
 		var s = getNameBytes();
+		if( s == null ) return null;
 		return @:privateAccess String.fromUCS2(s);
 	}
 
@@ -105,7 +107,7 @@ abstract TypeKind(Int) {
 		return null;
 	}
 
-	@:hlNative("std", "alloc_enum") public function allocEnum( index : Int, args : NativeArray<Dynamic>, nargs : Int ) : Dynamic {
+	@:hlNative("std", "alloc_enum_dyn") public function allocEnum( index : Int, args : NativeArray<Dynamic>, nargs : Int ) : Dynamic {
 		return null;
 	}
 

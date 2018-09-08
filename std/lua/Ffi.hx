@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2018 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,7 @@ import lua.Table;
 #if lua_jit
 @:luaRequire("ffi")
 extern class Ffi {
+	public function new(type : String, arg : Dynamic);
 
 	// Declaring and accessing external symbols
 	public static var C : Dynamic;
