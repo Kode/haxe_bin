@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2018 Haxe Foundation
+ * Copyright (C)2005-2019 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -66,7 +66,7 @@ extern class BodyElement extends Element
 	var background : String;
 	var onafterprint : haxe.Constraints.Function;
 	var onbeforeprint : haxe.Constraints.Function;
-	var onbeforeunload : Event -> String;
+	var onbeforeunload : Event -> Null<String>;
 	var onhashchange : haxe.Constraints.Function;
 	var onlanguagechange : haxe.Constraints.Function;
 	var onmessage : haxe.Constraints.Function;

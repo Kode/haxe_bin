@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2018 Haxe Foundation
+ * Copyright (C)2005-2019 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -99,7 +99,7 @@ class Boot {
 			case Table:
 				return Lua.type(o) == "table";
 			case Dynamic:
-				return true;
+				return o != null;
 			default: {
 				if ( o!= null &&  Lua.type(o)  == "table" && Lua.type(cl) == "table"){
 					if (extendsOrImplements(getClass(o), cl)) return true;
@@ -135,7 +135,7 @@ class Boot {
 
 	@:ifFeature("typed_cast")
 	private static function __cast(o : Dynamic, t : Dynamic) {
-		if (__instanceof(o, t)) return o;
+		if (o == null || __instanceof(o, t)) return o;
 		else throw "Cannot cast " +Std.string(o) + " to " +Std.string(t);
 	}
 
