@@ -57,16 +57,10 @@ package haxe.ds;
 	public function new() : Void { }
 
 	public function set( key : String, value : T ) : Void {
-		if (key == null) {
-			trace("Null key");
-		}
 		untyped __global__.__string_hash_set(__cpp__("HX_MAP_THIS"),key,value);
 	}
 
 	public function get( key : String ) : Null<T> {
-		if (key == null) {
-			trace("Null key");
-		}
 		return untyped __global__.__string_hash_get(h,key);
 	}
 
