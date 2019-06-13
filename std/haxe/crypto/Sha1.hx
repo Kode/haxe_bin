@@ -95,7 +95,7 @@ class Sha1 {
 		Append padding bits and the length, as described in the SHA1 standard.
 	 */
 	static function str2blks( s :String ) : Array<Int> {
-#if !(neko || (cpp && !hxcpp_smart_strings))
+#if target.unicode
 		var s = haxe.io.Bytes.ofString(s);
 #end
 		var nblk = ((s.length + 8) >> 6) + 1;
@@ -105,7 +105,7 @@ class Sha1 {
 			blks[i] = 0;
 		for (i in 0...s.length){
 			var p = i >> 2;
-			blks[p] |= #if !(neko || (cpp && !hxcpp_smart_strings)) s.get(i) #else StringTools.fastCodeAt(s,i) #end << (24 - ((i & 3) << 3));
+			blks[p] |= #if target.unicode s.get(i) #else StringTools.fastCodeAt(s,i) #end << (24 - ((i & 3) << 3));
 		}
 		var i = s.length;
 		var p = i >> 2;
@@ -133,14 +133,14 @@ class Sha1 {
 
 	/**
 		Bitwise rotate a 32-bit number to the left
-	 */
+	**/
 	inline function rol( num : Int, cnt : Int ) : Int {
 		return (num << cnt) | (num >>> (32 - cnt));
 	}
 
 	/**
 		Perform the appropriate triplet combination function for the current iteration
-	*/
+	**/
 	function ft( t : Int, b : Int, c : Int, d : Int ) : Int {
 		if ( t < 20 ) return (b & c) | ((~b) & d);
 		if ( t < 40 ) return b ^ c ^ d;
@@ -150,7 +150,7 @@ class Sha1 {
 
 	/**
 		Determine the appropriate additive constant for the current iteration
-	*/
+	**/
 	function kt( t : Int ) : Int {
 		if( t < 20)
 			return 0x5A827999;

@@ -19,6 +19,14 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
+import haxe.iterators.StringIterator;
+import haxe.iterators.StringKeyValueIterator;
+
+#if cpp
+using cpp.NativeString;
+#end
+
 /**
 	This class provides advanced methods on Strings. It is ideally used with
 	`using StringTools` and then acts as an [extension](https://haxe.org/manual/lf-static-extension.html)
@@ -27,9 +35,6 @@
 	If the first argument to any of the methods is null, the result is
 	unspecified.
 **/
-#if cpp
-using cpp.NativeString;
-#end
 class StringTools {
 	/**
 		Encode an URL by using the standard format.
@@ -115,7 +120,7 @@ class StringTools {
 			return untyped s.__URLDecode();
 		#elseif java
 			try
-				return untyped __java__("java.net.URLDecoder.decode(s, \"UTF-8\")")
+				return java.net.URLDecoder.decode(s, "UTF-8")
 			catch (e:Dynamic) throw e;
 		#elseif cs
 			return untyped cs.system.Uri.UnescapeDataString(s);
@@ -184,6 +189,15 @@ class StringTools {
 	}
 
 	/**
+		Returns `true` if `s` contains `value` and  `false` otherwise.
+
+		When `value` is `null`, the result is unspecified.
+	**/
+	public static inline function contains(s : String, value : String) : Bool {
+		return s.indexOf(value) != -1;
+	}
+
+	/**
 		Tells if the string `s` starts with the string `start`.
 
 		If `start` is `null`, the result is unspecified.
@@ -192,7 +206,7 @@ class StringTools {
 	**/
 	public static #if (cs || java || python) inline #end function startsWith( s : String, start : String ) : Bool {
 		#if java
-		return untyped s.startsWith(start);
+		return (cast s : java.NativeString).startsWith(start);
 		#elseif cs
 		return untyped s.StartsWith(start);
 		#elseif cpp
@@ -209,7 +223,7 @@ class StringTools {
 		#elseif python
 		return python.NativeStringTools.startswith(s, start);
 		#else
-		return( s.length >= start.length && s.substr(0, start.length) == start );
+		return( s.length >= start.length && s.lastIndexOf(start, 0) == 0 );
 		#end
 	}
 
@@ -222,7 +236,7 @@ class StringTools {
 	**/
 	public static #if (cs || java || python) inline #end function endsWith( s : String, end : String ) : Bool {
 		#if java
-		return untyped s.endsWith(end);
+		return (cast s : java.NativeString).endsWith(end);
 		#elseif cs
 		return untyped s.EndsWith(end);
 		#elseif cpp
@@ -243,7 +257,7 @@ class StringTools {
 		#else
 		var elen = end.length;
 		var slen = s.length;
-		return( slen >= elen && s.substr(slen - elen, elen) == end );
+		return( slen >= elen && s.indexOf(end, (slen - elen)) == (slen - elen) );
 		#end
 	}
 
@@ -324,7 +338,7 @@ class StringTools {
 		#if cs
 		return untyped s.Trim();
 		#elseif java
-		return untyped s.trim();
+		return (cast s : java.NativeString).trim();
 		#else
 		return ltrim(rtrim(s));
 		#end
@@ -394,7 +408,7 @@ class StringTools {
 		if (sub.length == 0)
 			return s.split(sub).join(by);
 		else
-			return untyped s.replace(sub, by);
+			return (cast s : java.NativeString).replace(sub, by);
 		#elseif cs
 		if (sub.length == 0)
 			return s.split(sub).join(by);
@@ -471,15 +485,41 @@ class StringTools {
 		#elseif hl
 		return @:privateAccess s.bytes.getUI16(index << 1);
 		#elseif lua
-		return lua.lib.luautf8.Utf8.byte(s,index+1);
+			#if lua_vanilla
+			return lua.NativeStringTools.byte(s,index+1);
+			#else
+			return lua.lib.luautf8.Utf8.byte(s,index+1);
+			#end
 		#else
 		return untyped s.cca(index);
 		#end
 	}
 
-	/*
+	/**
+		Returns an iterator of the char codes.
+
+		Note that char codes may differ across platforms because of different
+		internal encoding of strings in different runtimes.
+		For the consistent cross-platform UTF8 char codes see `haxe.iterators.StringIteratorUnicode`.
+	**/
+	public static inline function iterator( s : String ) : StringIterator {
+		return new StringIterator(s);
+	}
+
+	/**
+		Returns an iterator of the char indexes and codes.
+
+		Note that char codes may differ across platforms because of different
+		internal encoding of strings in different of runtimes.
+		For the consistent cross-platform UTF8 char codes see `haxe.iterators.StringKeyValueIteratorUnicode`.
+	**/
+	public static inline function keyValueIterator( s : String ) : StringKeyValueIterator {
+		return new StringKeyValueIterator(s);
+	}
+
+	/**
 		Tells if `c` represents the end-of-file (EOF) character.
-	*/
+	**/
 	@:noUsing public static inline function isEof( c : Int ) : Bool {
 		#if (flash || cpp || hl)
 		return c == 0;
@@ -487,11 +527,7 @@ class StringTools {
 		return c != c; // fast NaN
 		#elseif (neko || lua || eval)
 		return c == null;
-		#elseif cs
-		return c == -1;
-		#elseif java
-		return c == -1;
-		#elseif python
+		#elseif (cs || java || python)
 		return c == -1;
 		#else
 		return false;
@@ -502,26 +538,19 @@ class StringTools {
 		Returns a String that can be used as a single command line argument
 		on Unix.
 		The input will be quoted, or escaped if necessary.
-	*/
+	**/
+	@:noCompletion
+	@:deprecated('StringTools.quoteUnixArg() is deprecated. Use haxe.SysTools.quoteUnixArg() instead.')
 	public static function quoteUnixArg(argument:String):String {
-		// Based on cpython's shlex.quote().
-		// https://hg.python.org/cpython/file/a3f076d4f54f/Lib/shlex.py#l278
-
-		if (argument == "")
-			return "''";
-
-		if (!~/[^a-zA-Z0-9_@%+=:,.\/-]/.match(argument))
-			return argument;
-
-		// use single quotes, and put single quotes into double quotes
-		// the string $'b is then quoted as '$'"'"'b'
-		return "'" + replace(argument, "'", "'\"'\"'") + "'";
+		return inline haxe.SysTools.quoteUnixArg(argument);
 	}
 
 	/**
 		Character codes of the characters that will be escaped by `quoteWinArg(_, true)`.
-	*/
-	public static var winMetaCharacters = [" ".code, "(".code, ")".code, "%".code, "!".code, "^".code, "\"".code, "<".code, ">".code, "&".code, "|".code, "\n".code, "\r".code, ",".code, ";".code];
+	**/
+	@:noCompletion
+	@:deprecated('StringTools.winMetaCharacters is deprecated. Use haxe.SysTools.winMetaCharacters instead.')
+	public static var winMetaCharacters:Array<Int> = cast haxe.SysTools.winMetaCharacters;
 
 	/**
 		Returns a String that can be used as a single command line argument
@@ -531,75 +560,19 @@ class StringTools {
 		http://msdn.microsoft.com/en-us/library/ms880421
 
 		Examples:
-		```
+		```haxe
 		quoteWinArg("abc") == "abc";
 		quoteWinArg("ab c") == '"ab c"';
 		```
-	*/
+	**/
+	@:noCompletion
+	@:deprecated('StringTools.quoteWinArg() is deprecated. Use haxe.SysTools.quoteWinArg() instead.')
 	public static function quoteWinArg(argument:String, escapeMetaCharacters:Bool):String {
-		// If there is no space, tab, back-slash, or double-quotes, and it is not an empty string.
-		if (!~/^[^ \t\\"]+$/.match(argument)) {
-
-			// Based on cpython's subprocess.list2cmdline().
-			// https://hg.python.org/cpython/file/50741316dd3a/Lib/subprocess.py#l620
-
-			var result = new StringBuf();
-			var needquote = argument.indexOf(" ") != -1 || argument.indexOf("\t") != -1 || argument == "";
-
-			if (needquote)
-				result.add('"');
-
-			var bs_buf = new StringBuf();
-			for (i in 0...argument.length) {
-				switch (argument.charCodeAt(i)) {
-					case "\\".code:
-						// Don't know if we need to double yet.
-						bs_buf.add("\\");
-					case '"'.code:
-						// Double backslashes.
-						var bs = bs_buf.toString();
-						result.add(bs);
-						result.add(bs);
-						bs_buf = new StringBuf();
-						result.add('\\"');
-					case var c:
-						// Normal char
-						if (bs_buf.length > 0) {
-							result.add(bs_buf.toString());
-							bs_buf = new StringBuf();
-						}
-						result.addChar(c);
-				}
-			}
-
-			// Add remaining backslashes, if any.
-			result.add(bs_buf.toString());
-
-			if (needquote) {
-				result.add(bs_buf.toString());
-				result.add('"');
-			}
-
-			argument = result.toString();
-		}
-
-		if (escapeMetaCharacters) {
-			var result = new StringBuf();
-			for (i in 0...argument.length) {
-				var c = argument.charCodeAt(i);
-				if (winMetaCharacters.indexOf(c) >= 0) {
-					result.addChar("^".code);
-				}
-				result.addChar(c);
-			}
-			return result.toString();
-		} else {
-			return argument;
-		}
+		return inline haxe.SysTools.quoteWinArg(argument, escapeMetaCharacters);
 	}
 
 	#if java
-	private static inline function _charAt(str:String, idx:Int):java.StdTypes.Char16 return untyped str._charAt(idx);
+	private static inline function _charAt(str:String, idx:Int):java.StdTypes.Char16 return (cast str : java.NativeString).charAt(idx);
 	#end
 
 	#if neko
@@ -607,4 +580,14 @@ class StringTools {
 	private static var _urlDecode = neko.Lib.load("std","url_decode",1);
 	#end
 
+	#if utf16
+	static inline var MIN_SURROGATE_CODE_POINT = 65536;
+	static inline function utf16CodePointAt(s:String, index:Int):Int {
+		var c = StringTools.fastCodeAt(s, index);
+		if (c >= 0xD800 && c <= 0xDBFF) {
+			c = ((c -0xD7C0) << 10) | (StringTools.fastCodeAt(s, index + 1) & 0x3FF);
+		}
+		return c;
+	}
+	#end
 }

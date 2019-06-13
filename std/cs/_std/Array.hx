@@ -24,11 +24,13 @@ import cs.NativeArray;
 #if core_api_serialize
 @:meta(System.Serializable)
 #end
-@:final class Array<T> implements ArrayAccess<T> {
+final class Array<T> implements ArrayAccess<T> {
 
 	public var length(default,null) : Int;
 
 	private var __a:NativeArray<T>;
+
+	@:skipReflection static var __hx_toString_depth = 0;
 
 #if erase_generics
 	inline private static function ofNative<X>(native:NativeArray<Dynamic>):Array<X>
@@ -310,6 +312,23 @@ import cs.NativeArray;
 
 	public function toString() : String
 	{
+		if (__hx_toString_depth >= 5) {
+			return "...";
+		}
+		++__hx_toString_depth;
+		try {
+			var s = __hx_toString();
+			--__hx_toString_depth;
+			return s;
+		} catch(e:Dynamic) {
+			--__hx_toString_depth;
+			throw(e);
+		}
+	}
+
+	@:skipReflection
+	function __hx_toString() : String
+	{
 		var ret = new StringBuf();
 		var a = __a;
 		ret.add("[");
@@ -480,8 +499,7 @@ import cs.NativeArray;
 	}
 }
 
-@:final
-private class ArrayIterator<T>
+private final class ArrayIterator<T>
 {
 	var arr:Array<T>;
 	var len:Int;

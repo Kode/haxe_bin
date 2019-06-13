@@ -23,22 +23,22 @@ package js;
 
 import js.Syntax; // import it here so it's always available in the compiler
 
-private class HaxeError extends js.Error {
+private class HaxeError extends js.lib.Error {
 	var val:Dynamic;
 
 	@:pure
 	public function new(val:Dynamic) {
 		super();
 		this.val = val;
-		if ((cast js.Error).captureStackTrace) (cast js.Error).captureStackTrace(this, HaxeError);
+		if ((cast js.lib.Error).captureStackTrace) (cast js.lib.Error).captureStackTrace(this, HaxeError);
 	}
 
-	public static function wrap(val:Dynamic):js.Error {
-		return if (js.Syntax.instanceof(val, js.Error)) val else new HaxeError(val);
+	public static function wrap(val:Dynamic):js.lib.Error {
+		return if (js.Syntax.instanceof(val, js.lib.Error)) val else new HaxeError(val);
 	}
 
 	static function __init__() {
-		js.Object.defineProperty((cast HaxeError).prototype, "message", {get: () -> (cast String)(js.Lib.nativeThis.val)});
+		js.lib.Object.defineProperty((cast HaxeError).prototype, "message", {get: () -> (cast String)(js.Lib.nativeThis.val)});
 	}
 }
 
@@ -47,6 +47,10 @@ class Boot {
 
 	static inline function isClass(o:Dynamic) : Bool {
 		return untyped __define_feature__("js.Boot.isClass", o.__name__);
+	}
+
+	static inline function isInterface(o:Class<Dynamic>) : Bool {
+		return untyped __define_feature__("js.Boot.isInterface", o.__isInterface__);
 	}
 
 	static inline function isEnum(e:Dynamic) : Bool {
@@ -109,11 +113,9 @@ class Boot {
 						return str + ")";
 					}
 					#end
-					var l = o.length;
-					var i;
 					var str = "[";
 					s += "\t";
-					for( i in 0...l )
+					for( i in 0...o.length )
 						str += (if (i > 0) "," else "")+__string_rec(o[i],s);
 					str += "]";
 					return str;
@@ -130,11 +132,11 @@ class Boot {
 					if( s2 != "[object Object]")
 						return s2;
 				}
-				var k : String = null;
 				var str = "{\n";
 				s += "\t";
 				var hasp = (o.hasOwnProperty != null);
-				__js__("for( var k in o ) {");
+				var k : String = null;
+				__js__("for( {0} in {1} ) {", k, o);
 					if( hasp && !o.hasOwnProperty(k) )
 						__js__("continue");
 					if( k == "prototype" || k == "__class__" || k == "__super__" || k == "__interfaces__" || k == "__properties__" )
@@ -161,13 +163,14 @@ class Boot {
 			return false;
 		if( cc == cl )
 			return true;
-		var intf : Dynamic = cc.__interfaces__;
-		if( intf != null )
+		if( js.lib.Object.prototype.hasOwnProperty.call(cc, "__interfaces__") ) {
+			var intf : Dynamic = cc.__interfaces__;
 			for( i in 0...intf.length ) {
 				var i : Dynamic = intf[i];
 				if( i == cl || __interfLoop(i,cl) )
 					return true;
 			}
+		}
 		return __interfLoop(cc.__super__,cl);
 	}
 
@@ -184,7 +187,7 @@ class Boot {
 		case String:
 			return js.Syntax.typeof(o) == "string";
 		case Array:
-			return js.Syntax.instanceof(o, Array) && o.__enum__ == null;
+			return js.Syntax.instanceof(o, Array) #if js_enums_as_arrays && o.__enum__ == null #end;
 		case Dynamic:
 			return o != null;
 		default:
@@ -209,9 +212,13 @@ class Boot {
 			#if js_enums_as_arrays
 			return o.__enum__ == cl;
 			#else
-			return (untyped $hxEnums[o.__enum__]) == cl;
+			return if (o.__enum__ != null) (untyped $hxEnums[o.__enum__]) == cl else false;
 			#end
 		}
+	}
+
+	static inline function __implements(o : Dynamic, t : Class<Dynamic>) : Bool {
+		return o != null && isInterface(t) && __interfLoop(getClass(o), t);
 	}
 
 	@:ifFeature("typed_cast") private static function __cast(o : Dynamic, t : Dynamic) {
@@ -219,10 +226,14 @@ class Boot {
 		else throw "Cannot cast " +Std.string(o) + " to " +Std.string(t);
 	}
 
-	static var __toStr = untyped ({}).toString;
+	static var __toStr:js.lib.Function;
+	static function __init__() {
+		Boot.__toStr = (cast {}).toString;
+	}
+
 	// get native JS [[Class]]
 	static function __nativeClassName(o:Dynamic):String {
-		var name = untyped __toStr.call(o).slice(8, -1);
+		var name:String = __toStr.call(o).slice(8, -1);
 		// exclude general Object and Function
 		// also exclude Math and JSON, because instanceof cannot be called on them
 		if (name == "Object" || name == "Function" || name == "Math" || name == "JSON")

@@ -147,7 +147,6 @@ class Boot {
 
 		if (UBuiltins.hasattr(o, "__class__"))
 		{
-
 			if (isAnonObject(o))
 			{
 				var toStr = null;
@@ -169,7 +168,6 @@ class Boot {
 				{
 					return toStr;
 				}
-
 			}
 			if (UBuiltins.isinstance(o, Enum)) {
 
@@ -246,7 +244,10 @@ class Boot {
 		var a = [];
 		if (o != null) {
 			if (Internal.hasFields(o)) {
-				return (Internal.fieldFields(o) : Array<String>).copy();
+				var fields = Internal.fieldFields(o);
+				if(fields != null) {
+					return (fields : Array<String>).copy();
+				}
 			}
 			if (isAnonObject(o)) {
 
@@ -255,7 +256,8 @@ class Boot {
 				var handler = unhandleKeywords;
 
 				Syntax.code("for k in keys:");
-				Syntax.code("    a.append(handler(k))");
+				Syntax.code("    if (k != '_hx_disable_getattr'):");
+				Syntax.code("        a.append(handler(k))");
 			}
 			else if (UBuiltins.hasattr(o, "__dict__")) {
 				var a = [];
@@ -289,6 +291,14 @@ class Boot {
 	@:ifFeature("closure_Array", "closure_String")
 	static inline function createClosure (obj:Dynamic, func:Dynamic):Dynamic {
 		return new MethodClosure(obj, func);
+	}
+
+	static function hasField( o : Dynamic, field : String ) : Bool {
+		if(isAnonObject(o))
+		{
+			return Syntax.code('{0}._hx_hasattr({1})', o, field);
+		}
+		return UBuiltins.hasattr(o, handleKeywords(field));
 	}
 
 	static function field( o : Dynamic, field : String ) : Dynamic {
@@ -447,6 +457,37 @@ class Boot {
 			if (keywords.has(real)) return real;
 		}
 		return name;
+	}
+
+	static inline function implementsInterface(value:Dynamic, cls:Class<Dynamic>):Bool {
+		function loop (intf) {
+			var f:Array<Dynamic> = if (Internal.hasInterfaces(intf)) Internal.fieldInterfaces(intf) else [];
+			if (f != null) {
+				for (i in f) {
+					if ( i == cls) {
+						return true;
+					} else {
+						var l = loop(i);
+						if (l) {
+							return true;
+						}
+					}
+				}
+				return false;
+			} else {
+				return false;
+			}
+		}
+		var currentClass = Syntax.field(value, "__class__");
+		var result = false;
+		while(currentClass != null) {
+			if (loop(currentClass)) {
+				result = true;
+				break;
+			}
+			currentClass = getSuperClass(currentClass);
+		}
+		return result;
 	}
 
 }

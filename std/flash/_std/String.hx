@@ -39,5 +39,5 @@ extern class String {
 	@:pure static inline function fromCharCode( code : Int ) : String untyped {
 		return code < 0x10000 ? String["fromCharCode"](code) : flash.Boot.fromCodePoint(code);
 	}
-	
+
 }

@@ -194,6 +194,13 @@ class Boot {
 	}
 
 	/**
+		Check if provided value is an anonymous object
+	**/
+	public static inline function isAnon(v:Any) : Bool {
+		return Std.is(v, HxAnon);
+	}
+
+	/**
 		Returns Class<HxClass>
 	**/
 	public static inline function getHxClass() : HxClass {
@@ -325,7 +332,10 @@ class Boot {
 	/**
 		Returns string representation of `value`
 	**/
-	public static function stringify( value : Dynamic ) : String {
+	public static function stringify( value : Dynamic, maxRecursion:Int = 10 ) : String {
+		if(maxRecursion <= 0) {
+			return '<...>';
+		}
 		if (value == null) {
 			return 'null';
 		}
@@ -341,11 +351,23 @@ class Boot {
 		if (value.is_array()) {
 			var strings = Syntax.arrayDecl();
 			Syntax.foreach(value, function(key:Dynamic, item:Dynamic) {
-				Global.array_push(strings, (key:String) + ' => ' + stringify(item));
+				strings.push(Syntax.string(key) + ' => ' + stringify(item, maxRecursion - 1));
 			});
 			return '[' + Global.implode(', ', strings) + ']';
 		}
 		if (value.is_object()) {
+			if(Std.is(value, Array)) {
+				return inline stringifyNativeIndexedArray(value.arr, maxRecursion - 1);
+			}
+			if(Std.is(value, HxEnum)) {
+				var e:HxEnum = value;
+				var result = e.tag;
+				if (Global.count(e.params) > 0) {
+					var strings = Global.array_map(function (item) return Boot.stringify(item, maxRecursion - 1), e.params);
+					result += '(' + Global.implode(',', strings) + ')';
+				}
+				return result;
+			}
 			if (value.method_exists('toString')) {
 				return value.toString();
 			}
@@ -359,7 +381,7 @@ class Boot {
 				var result = new NativeIndexedArray<String>();
 				var data = Global.get_object_vars(value);
 				for (key in data.array_keys()) {
-					result.array_push('$key : ' + stringify(data[key]));
+					result.array_push('$key : ' + stringify(data[key], maxRecursion - 1));
 				}
 				return '{ ' + Global.implode(', ', result) + ' }';
 			}
@@ -373,6 +395,14 @@ class Boot {
 			}
 		}
 		throw "Unable to stringify value";
+	}
+
+	static public function stringifyNativeIndexedArray<T>( arr : NativeIndexedArray<T>, maxRecursion : Int = 10 ) : String {
+		var strings = Syntax.arrayDecl();
+		Syntax.foreach(arr, function(index:Int, value:T) {
+			strings[index] = Boot.stringify(value, maxRecursion - 1);
+		});
+		return '[' + Global.implode(',', strings) + ']';
 	}
 
 	static public inline function isNumber( value:Dynamic ) {
@@ -410,6 +440,13 @@ class Boot {
 		if (type == null) return false;
 
 		var phpType = type.phpClassName;
+		#if php_prefix
+			var prefix = getPrefix();
+			if(Global.substr(phpType, 0, Global.strlen(prefix) + 1) == '$prefix\\') {
+				phpType = Global.substr(phpType, Global.strlen(prefix) + 1);
+			}
+		#end
+
 		switch (phpType) {
 			case 'Dynamic':
 				return value != null;
@@ -431,7 +468,7 @@ class Boot {
 				return value.is_string();
 			case 'php\\NativeArray', 'php\\_NativeArray\\NativeArray_Impl_':
 				return value.is_array();
-			case 'Enum', 'Class':
+			case 'Enum' | 'Class':
 				if (Std.is(value, HxClass)) {
 					var valuePhpClass = (cast value:HxClass).phpClassName;
 					var enumPhpClass = (cast HxEnum:HxClass).phpClassName;
@@ -482,7 +519,7 @@ class Boot {
 		if (right == 0) {
 			return left;
 		} else if (left >= 0) {
-			return ((left >> right) & ~(1 << ( 8*Const.PHP_INT_SIZE-1 ) >> (right-1)));
+			return (left >> right) & ~( (1 << (8 * Const.PHP_INT_SIZE - 1)) >> (right - 1) );
 		} else {
 			return (left >> right) & (0x7fffffff >> (right - 1));
 		}
@@ -490,7 +527,7 @@ class Boot {
 
 	/**
 		Helper method to avoid "Cannot use temporary expression in write context" error for expressions like this:
-		```
+		```haxe
 		(new MyClass()).fieldName = 'value';
 		```
 	**/
@@ -645,10 +682,11 @@ private class HxClass {
 **/
 @:keep
 @:dox(hide)
+@:allow(php.Boot.stringify)
 private class HxEnum {
-	var tag : String;
-	var index : Int;
-	var params : NativeArray;
+	final tag : String;
+	final index : Int;
+	final params : NativeArray;
 
 	public function new( tag:String, index:Int, arguments:NativeArray = null ) : Void {
 		this.tag = tag;
@@ -668,12 +706,7 @@ private class HxEnum {
 	**/
 	@:phpMagic
 	public function __toString() : String {
-		var result = tag;
-		if (Global.count(params) > 0) {
-			var strings = Global.array_map(function (item) return Boot.stringify(item), params);
-			result += '(' + Global.implode(',', strings) + ')';
-		}
-		return result;
+		return Boot.stringify(this);
 	}
 }
 
@@ -737,9 +770,14 @@ private class HxString {
 		if(start == null) {
 			start = 0;
 		} else {
-			start = start - str.length;
-			if(start > 0) {
-				start = 0;
+			var length = str.length;
+			if(start >= 0) {
+				start = start - length;
+				if(start > 0) {
+					start = 0;
+				}
+			} else if(start < -length) {
+				start = -length;
 			}
 		}
 		var index:EitherType<Int,Bool> = if(search == '') {
@@ -897,9 +935,7 @@ private class HxAnon extends StdClass {
 
 	@:phpMagic
 	function __call( name:String, args:NativeArray ) : Dynamic {
-		var method = Syntax.field(this, name);
-		Syntax.keepVar(method);
-		return method(Syntax.splat(args));
+		return Syntax.code("($this->{0})(...{1})", name, args);
 	}
 }
 

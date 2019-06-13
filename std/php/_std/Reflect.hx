@@ -23,6 +23,8 @@
 import php.Boot;
 import php.Syntax;
 import php.Closure;
+import php.Const;
+import php.NativeAssocArray;
 import haxe.Constraints;
 
 using php.Global;
@@ -46,6 +48,10 @@ using php.Global;
 			return Syntax.field(Boot.dynamicString(o), field);
 		}
 		if (!o.is_object()) return null;
+
+		if (field == '' && Const.PHP_VERSION_ID < 70100) {
+			return Syntax.coalesce(Syntax.array(o)[field], null);
+		}
 
 		if (o.property_exists(field)) {
 			return Syntax.field(o, field);
@@ -153,10 +159,8 @@ using php.Global;
 	}
 
 	public static function copy<T>( o : T ) : T {
-		if (Global.is_object(o)) {
-			var fields = Global.get_object_vars(cast o);
-			var hxAnon = Boot.getHxAnon().phpClassName;
-			return Syntax.construct(hxAnon, fields);
+		if (Boot.isAnon(o)) {
+			return Syntax.clone(o);
 		} else {
 			return null;
 		}
