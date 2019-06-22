@@ -52,7 +52,7 @@ class String {
 			return null;
 		return bytes.getUI16(index << 1);
 	}
-	
+
 	inline function findChar(start:Int,len:Int,src:hl.Bytes,srcLen:Int) : Int {
 		var p = 0;
 		while( true ) {
@@ -76,16 +76,18 @@ class String {
 	}
 
 	public function lastIndexOf( str : String, ?startIndex : Int ) : Int {
-		var last = 0;
-		var start = this.length;
-		if( startIndex != null )
-			start = startIndex;
-		start <<= 1;
-		while( true ) {
-			var p = findChar(last, length << 1, str.bytes, str.length << 1);
-			if( p < 0 || p > start )
-				return (last >> 1) - 1;
-			last = p + 2;
+		var max = this.length;
+		if( startIndex != null ) {
+			max = startIndex + str.length;
+			if( max < 0 ) max = 0;
+			if( max > this.length ) max = this.length;
+		}
+		var pos = max - str.length;
+		var slen = str.length << 1;
+		while( pos >= 0 ) {
+			if( bytes.compare(pos << 1, str.bytes, 0, slen) == 0 )
+				return pos;
+			pos--;
 		}
 		return -1;
 	}
@@ -193,10 +195,14 @@ class String {
 	}
 
 	@:keep function __compare( v : Dynamic ) : Int {
-		var s = Std.instance(v, String);
+		var s = Std.downcast(v, String);
 		if( s == null )
 			return hl.Api.comparePointer(this, v);
+		#if (hl_ver >= version("1.10"))
+		var v = bytes.compare16(s.bytes, length < s.length ? length : s.length);
+		#else
 		var v = bytes.compare(0, s.bytes, 0, (length < s.length ? length : s.length) << 1);
+		#end
 		return v == 0 ? length - s.length : v;
 	}
 

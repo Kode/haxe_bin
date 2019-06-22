@@ -282,7 +282,7 @@ extern class Global {
 
 	/**
 		@see http://php.net/manual/en/function.constant.php
-	*/
+	**/
 	static function constant( name:String ) : Dynamic;
 
 	/**
@@ -399,6 +399,11 @@ extern class Global {
 		@see http://php.net/manual/en/function.substr.php
 	**/
 	static function substr( string:String, start:Int, ?length:Int ) : EitherType<Bool,String>;
+
+	/**
+		@see http://php.net/manual/en/function.substr-count.php
+	**/
+	static function substr_count( haystack:String, needle:String, ?offset:Int, ?length:Int ) : Int;
 
 	/**
 		@see http://php.net/manual/en/function.substr_replace.php
@@ -788,6 +793,11 @@ extern class Global {
 	static function preg_replace( pattern:EitherType<String,NativeArray>, replacement:EitherType<String,NativeArray>, subject:EitherType<String,NativeArray>, limit:Int = -1, ?count:Int ) : EitherType<String,NativeArray> ;
 
 	/**
+		@see http://php.net/manual/en/function.preg-last-error.php
+	**/
+	static function preg_last_error() : Int ;
+
+	/**
 		@see http://php.net/manual/en/function.md5.php
 	**/
 	static function md5( str:String, raw_output:Bool = false ) : String;
@@ -873,6 +883,16 @@ extern class Global {
 	static function hexdec( hex_string:String ) : Int;
 
 	/**
+		@see http://php.net/manual/en/function.decbin.php
+	**/
+	static function decbin( number:Int ) : String;
+
+	/**
+		@see http://php.net/manual/en/function.bindec.php
+	**/
+	static function bindec( binary_string:String ) : Float;
+
+	/**
 		@see http://php.net/manual/en/function.bin2hex.php
 	**/
 	static function bin2hex( str:String ) : String;
@@ -936,6 +956,36 @@ extern class Global {
 		@see http://php.net/manual/en/function.spl-object-hash.php
 	**/
 	static function spl_object_hash( obj:{} ) : String;
+
+	/**
+		@see http://php.net/manual/en/function.spl-autoload-call.php
+	**/
+	static function spl_autoload_call( class_name:String ) : Void;
+
+	/**
+		@see http://php.net/manual/en/function.spl-autoload-extensions.php
+	**/
+	static function spl_autoload_extensions( ?file_extensions:String ) : String;
+
+	/**
+		@see http://php.net/manual/en/function.spl-autoload-functions.php
+	**/
+	static function spl_autoload_functions() : EitherType<NativeIndexedArray<Function>,Bool>;
+
+	/**
+		@see http://php.net/manual/en/function.spl-autoload-register.php
+	**/
+	static function spl_autoload_register( ?autoload_function:(className:String)->Void, throw_exception:Bool = true, prepend:Bool = false ) : Bool;
+
+	/**
+		@see http://php.net/manual/en/function.spl-autoload-unregister.php
+	**/
+	static function spl_autoload_unregister( autoload_function:(className:String)->Void ) : Bool;
+
+	/**
+		@see http://php.net/manual/en/function.spl-autoload.php
+	**/
+	static function spl_autoload( class_name:String, ?file_extensions:String ) : Void;
 
 	/**
 		@see http://php.net/manual/en/function.utf8-encode.php
@@ -1142,7 +1192,7 @@ extern class Global {
 	/**
 		@see http://php.net/manual/en/function.socket-read.php
 	**/
-	static function socket_read( resource:Resource, length:Int, type:Int=Const.PHP_BINARY_READ ) : EitherType<Bool, String>;
+	static function socket_read( resource:Resource, length:Int, ?type:Int ) : EitherType<Bool, String>;
 
 	/**
 		@see http://php.net/manual/en/function.socket-write.php
@@ -1354,6 +1404,16 @@ extern class Global {
 		@see http://php.net/manual/en/function.include-once.php
 	**/
 	static function include_once( include_path:String ) : Void;
+
+	/**
+		@see http://php.net/manual/en/function.set-include-path.php
+	**/
+	static function set_include_path( new_include_path:String ) : String;
+
+	/**
+		@see http://php.net/manual/en/function.get-include-path.php
+	**/
+	static function get_include_path() : String;
 
 	/**
 		@see http://php.net/manual/en/function.gzcompress.php

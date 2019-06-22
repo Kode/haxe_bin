@@ -23,8 +23,11 @@
 import php.*;
 import sys.io.FileOutput;
 import sys.io.FileInput;
+import haxe.SysTools;
 
 @:coreApi class Sys {
+	static var lineEnd:String = Sys.systemName() == "Windows" ? "\r\n" : "\n";
+
 	/** Environment variables set by `Sys.putEnv()` */
 	static var customEnvVars = new NativeAssocArray<String>();
 
@@ -33,7 +36,7 @@ import sys.io.FileInput;
 	}
 
 	public static inline function println( v : Dynamic ) : Void {
-		Global.echo(Std.string(v) + "\n");
+		Global.echo(Std.string(v) + lineEnd);
 	}
 
 	public static function args() : Array<String> {
@@ -85,10 +88,10 @@ import sys.io.FileInput;
 				case "Windows":
 					cmd = [
 						for (a in [StringTools.replace(cmd, "/", "\\")].concat(args))
-						StringTools.quoteWinArg(a, true)
+						SysTools.quoteWinArg(a, true)
 					].join(" ");
 				case _:
-					cmd = [cmd].concat(args).map(StringTools.quoteUnixArg).join(" ");
+					cmd = [cmd].concat(args).map(SysTools.quoteUnixArg).join(" ");
 			}
 		}
 		var result = Boot.deref(0);

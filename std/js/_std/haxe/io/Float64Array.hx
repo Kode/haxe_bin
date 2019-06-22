@@ -21,12 +21,12 @@
  */
 package haxe.io;
 
-typedef Float64ArrayData = js.html.Float64Array;
+typedef Float64ArrayData = js.lib.Float64Array;
 
 @:coreApi
 abstract Float64Array(Float64ArrayData) {
 
-	public static inline var BYTES_PER_ELEMENT = 4;
+	public static inline var BYTES_PER_ELEMENT = 8;
 	public var length(get,never) : Int;
 	public var view(get,never) : ArrayBufferView;
 

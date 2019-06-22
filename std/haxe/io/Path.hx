@@ -40,7 +40,7 @@ class Path {
 
 		If the path has no directory, the value is `null`.
 	**/
-	public var dir : String;
+	public var dir : Null<String>;
 
 	/**
 		The file name.
@@ -60,7 +60,7 @@ class Path {
 
 		If the path has no extension, the value is `null`.
 	**/
-	public var ext : String;
+	public var ext : Null<String>;
 
 	/**
 		`true` if the last directory separator is a backslash, `false` otherwise.
@@ -154,7 +154,7 @@ class Path {
 	/**
 		Returns the extension of `path`.
 
-		If the extension is `null`, the empty String `""` is returned.
+		If `path` has no extension, the empty String `""` is returned.
 
 		If `path` is `null`, the result is unspecified.
 	**/
@@ -230,8 +230,13 @@ class Path {
 		var acc = new StringBuf();
 		var colon = false;
 		var slashes = false;
+		#if utf16
+		for (c in haxe.iterators.StringIteratorUnicode.unicodeIterator(tmp)) {
+			switch (c) {
+		#else
 		for (i in 0...tmp.length) {
 			switch (StringTools.fastCodeAt(tmp, i)) {
+		#end
 				case ":".code:
 					acc.add(":");
 					colon = true;
@@ -285,7 +290,6 @@ class Path {
 
 		If `path` is `null`, the result is unspecified.
 	**/
-	@:require(haxe_ver >= 3.1)
 	public static function removeTrailingSlashes ( path : String ) : String {
 		while (true) {
 			switch(path.charCodeAt(path.length - 1)) {
@@ -299,7 +303,6 @@ class Path {
 	/**
 		Returns `true` if the path is an absolute path, and `false` otherwise.
 	**/
-	@:require(haxe_ver >= 3.2)
 	public static function isAbsolute ( path : String ) : Bool {
 		if (StringTools.startsWith(path, '/')) return true;
 		if (path.charAt(1) == ':') return true;

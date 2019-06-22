@@ -144,7 +144,7 @@ import java.NativeArray;
 #end
 	}
 
-	@:final private function lookup( key : String ) : Int
+	private final function lookup( key : String ) : Int
 	{
 		if (nBuckets != 0)
 		{
@@ -175,7 +175,7 @@ import java.NativeArray;
 		return -1;
 	}
 
-	@:final @:private function resize(newNBuckets:Int) : Void
+	@:private final function resize(newNBuckets:Int) : Void
 	{
 		//This function uses 0.25*n_bucktes bytes of working space instead of [sizeof(key_t+val_t)+.25]*n_buckets.
 		var newHash = null;
@@ -454,7 +454,7 @@ import java.NativeArray;
 	//guarantee: Whatever this function is, it will never return 0 nor 1
 	extern private static inline function hash(s:String):HashType
 	{
-		var k:Int = untyped s.hashCode();
+		var k:Int = (cast s : java.NativeString).hashCode();
 		//k *= 357913941;
 		//k ^= k << 24;
 		//k += ~357913941;
@@ -493,9 +493,8 @@ import java.NativeArray;
 
 private typedef HashType = Int;
 
-@:final
 @:access(haxe.ds.StringMap)
-private class StringMapKeyIterator<T>
+private final class StringMapKeyIterator<T>
 {
 	var m:StringMap<T>;
 	var i:Int;
@@ -533,9 +532,8 @@ private class StringMapKeyIterator<T>
 	}
 }
 
-@:final
 @:access(haxe.ds.StringMap)
-private class StringMapValueIterator<T>
+private final class StringMapValueIterator<T>
 {
 	var m:StringMap<T>;
 	var i:Int;
