@@ -224,7 +224,7 @@ class StringTools {
 		return (cast s : java.NativeString).startsWith(start);
 		#elseif cs
 		return untyped s.StartsWith(start);
-		/*#elseif cpp
+		#elseif cpp
 		if (s.length < start.length)
 			return false;
 		var p0 = s.c_str();
@@ -232,7 +232,7 @@ class StringTools {
 		for (i in 0...start.length)
 			if (p0.at(i) != p1.at(i))
 				return false;
-		return true;*/
+		return true;
 		#elseif hl
 		return @:privateAccess (s.length >= start.length && s.bytes.compare(0, start.bytes, 0, start.length << 1) == 0);
 		#elseif python
@@ -254,7 +254,7 @@ class StringTools {
 		return (cast s : java.NativeString).endsWith(end);
 		#elseif cs
 		return untyped s.EndsWith(end);
-		/*#elseif cpp
+		#elseif cpp
 		if (s.length < end.length)
 			return false;
 		var p0 = s.c_str().add(s.length - end.length);
@@ -262,7 +262,7 @@ class StringTools {
 		for (i in 0...end.length)
 			if (p0.at(i) != p1.at(i))
 				return false;
-		return true;*/
+		return true;
 		#elseif hl
 		var elen = end.length;
 		var slen = s.length;
