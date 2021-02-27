@@ -107,7 +107,8 @@ class Boot {
 		Check if specified property has getter
 	**/
 	public static function hasGetter(phpClassName:String, property:String):Bool {
-		ensureLoaded(phpClassName);
+		if(!ensureLoaded(phpClassName))
+			return false;
 
 		var has = false;
 		var phpClassName:haxe.extern.EitherType<Bool, String> = phpClassName;
@@ -123,7 +124,8 @@ class Boot {
 		Check if specified property has setter
 	**/
 	public static function hasSetter(phpClassName:String, property:String):Bool {
-		ensureLoaded(phpClassName);
+		if(!ensureLoaded(phpClassName))
+			return false;
 
 		var has = false;
 		var phpClassName:haxe.extern.EitherType<Bool, String> = phpClassName;
@@ -146,7 +148,7 @@ class Boot {
 		Retrieve metadata for specified class
 	**/
 	public static function getMeta(phpClassName:String):Null<Dynamic> {
-		ensureLoaded(phpClassName);
+		if(!ensureLoaded(phpClassName)) return null;
 		return Global.isset(meta[phpClassName]) ? meta[phpClassName] : null;
 	}
 
@@ -557,8 +559,10 @@ class Boot {
 	/**
 		Create Haxe-compatible anonymous structure of `data` associative array
 	**/
-	static public inline function createAnon(data:NativeArray):Dynamic {
-		return new HxAnon(data);
+	static public function createAnon(data:NativeArray):Dynamic {
+		var o = new HxAnon();
+		Syntax.foreach(data, (field:String, value:Any) -> Syntax.setField(o, field, value));
+		return o;
 	}
 
 	/**
@@ -644,6 +648,10 @@ class Boot {
 		} else {
 			return ((code - 0xF0) << 18) + ((Global.ord(s[1]) - 0x80) << 12) + ((Global.ord(s[2]) - 0x80) << 6) + Global.ord(s[3]) - 0x80;
 		}
+	}
+
+	static public function divByZero(value:Float):Float {
+		return value == 0 ? Const.NAN : (value < 0 ? -Const.INF : Const.INF);
 	}
 }
 
@@ -940,13 +948,6 @@ private class HxDynamicStr extends HxClosure {
 @:keep
 @:dox(hide)
 private class HxAnon extends StdClass {
-	public function new(fields:NativeArray = null) {
-		super();
-		if (fields != null) {
-			Syntax.foreach(fields, function(name, value) Syntax.setField(this, name, value));
-		}
-	}
-
 	@:phpMagic
 	function __get(name:String) {
 		return null;
